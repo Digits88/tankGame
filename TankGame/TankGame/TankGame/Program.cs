@@ -20,14 +20,7 @@ namespace TankGame
             {
                 game.Run();
             }
-
-
-
-
-            //}
-
-
         }
+    }
 #endif
 }
-

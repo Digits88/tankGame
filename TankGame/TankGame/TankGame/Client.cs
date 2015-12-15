@@ -9,181 +9,202 @@ namespace TankGame
 {
     class Client
     {
-        static void Main(string[] args)
-        {
-            StartConnection();
-            Console.ReadLine();
-        }
+        //public static void Main(String[] args)
+        //{
+        //    StartCommunication();
+        //    Console.ReadLine();
+        //}
 
-        public static void StartConnection()
+
+        public static void StartCommunication()
         {
-            NetworkStream net = null;
-            TcpClient conn = null;
-            String msg = null;
+
             try
             {
-                Console.WriteLine(" StartCommunication() method is calling.........");
-                String command = "JOIN#";
-                conn = new TcpClient();
-                // Connects the client to a remote TCP host using the specified host name and port number
-                conn.Connect("localhost", 6000);
-                //Returns the NetworkStream used to send and receive data
-                net = conn.GetStream();
-                ASCIIEncoding encode = new ASCIIEncoding();
-                byte[] bytes = encode.GetBytes(command);
-                net.Write(bytes, 0, bytes.Length);
-                Console.WriteLine("\n Join Command Sent To The Server");
+                TcpClient serv = new TcpClient();
+                serv.Connect("localhost", 6000);
+                String str = "JOIN#";
+                NetworkStream stm = serv.GetStream();
+
+                ASCIIEncoding asen = new ASCIIEncoding();
+                byte[] ba = asen.GetBytes(str);
+                stm.Write(ba, 0, ba.Length);
+                Console.WriteLine("\nSent JOIN#");
+
+                stm.Close();
+                handleMessage();
+                serv.Close();
 
             }
-            catch (Exception error)
+            catch (Exception e)
             {
-                Console.WriteLine(" Error Message: " + error.StackTrace);
+                Console.WriteLine("Error..... " + e.StackTrace);
             }
-            finally
-            {
-                if (net != null)
-                {
-                    net.Close();
-                    //handleMessages
-                    TcpListener server_listner = new TcpListener(IPAddress.Any, 7000);
-                    server_listner.Start();
-                    Byte[] bytes = new Byte[100];
 
-
-                    while (true)
-                    {
-                        TcpClient Server = server_listner.AcceptTcpClient();
-                        NetworkStream stream = Server.GetStream();
-                        msg = System.Text.Encoding.ASCII.GetString(bytes, 0, stream.Read(bytes, 0, bytes.Length));
-                        Console.WriteLine(msg + "\n");
-                        EncodeMsg(msg);
-                        Server.Close();
-                        stream.Close();
-                    }
-                } conn.Close();
-            }
         }
 
-        public static void EncodeMsg(String msg)
+        private static void handleMessage()
         {
-            //Remove # from msg
-            msg = msg.Remove(msg.Length - 1);
-            char index = msg[0];
-            // Console.WriteLine(index);
-            if (index.Equals('I'))
-            {
-                Console.WriteLine("*******************************************************************\n");
-                Console.WriteLine("Game Instance Received.......\n");
-                String[] parts = msg.Split(':');
-                Console.WriteLine("Player Is: " + parts[1] + "\n");
-                //Get brick co-ordinates
-                String type = null;
-                for (int l = 1; l < 4; l++)
-                {
-                    if (l == 1) { type = "Brick"; }
-                    else if (l == 2) { type = "Stone"; }
-                    else if (l == 3) { type = "Water"; }
-                    Console.WriteLine(type + " Co-ordinates are........." + "\n");
-                    parts[l + 1] = parts[l + 1].Replace(',', ';');
-                    String[] bricks = parts[l + 1].Split(';');
-                    String[] BrickX = new String[bricks.Length / 2];
-                    String[] BrickY = new String[bricks.Length / 2];
+            TcpListener serverListner = new TcpListener(IPAddress.Any, 7000);
+            serverListner.Start();
+            Byte[] bytes = new Byte[1024];
+            String data;
 
-                    int j = 0, k = 0;
+            //listening loop;
+            while (true)
+            {
+                TcpClient gameServer = serverListner.AcceptTcpClient();
+                data = null;
+                NetworkStream stream = gameServer.GetStream();
 
-                    for (int i = 0; i < bricks.Length; i = i + 2)
-                    {
+                int i;
 
-                        BrickX[j] = bricks[i];
-                        j++;
-                    }
-                    for (int i = 1; i < bricks.Length; i = i + 2)
-                    {
-                        if (bricks[i] != null)
-                        {
-                            BrickY[k] = bricks[i];
-                            k++;
-                        }
-                    }
-                    for (int i = 0; i < bricks.Length / 2; i++)
-                    {
-                        Console.WriteLine(type + " " + (i + 1) + ": " + "X--> " + BrickX[i] + "   Y--> " + BrickY[i]);
-                    }
-                    Console.WriteLine("\n");
-                }
-                Console.WriteLine("*******************************************************************\n");
-            }
-            else if (index.Equals('S'))
-            {
-                Console.WriteLine("*******************************************************************\n");
-                Console.WriteLine("Your Details Received.......\n");
-                String[] parts = msg.Split(';');
-                //parts[0] = parts[0].Remove(0);
-                //Console.WriteLine("Player Number Is: " + parts[0]+"\n");
-                String[] cor = parts[1].Split(',');
-                Console.WriteLine("Your Position Cordinates Are: " + "X--> " + cor[0] + " Y--> " + cor[1] + "\n");
-                String dir = null;
-                if (parts[2].Equals("0")) { dir = "North"; }
-                else if (parts[2].Equals("1")) { dir = "East"; }
-                else if (parts[2].Equals("2")) { dir = "South"; }
-                else if (parts[2].Equals("3")) { dir = "West"; }
-                Console.WriteLine("Your Direction Is: " + dir + "\n");
-                Console.WriteLine("*******************************************************************\n");
-            }
-            else if (index.Equals('C'))
-            {
-                Console.WriteLine("*******************************************************************\n");
-                Console.WriteLine("Guys...Coins Appeared.......\n");
-                String[] parts = msg.Split(':');
-                String[] cor = parts[1].Split(',');
-                Console.WriteLine("Coin Cordinates Are: " + "X--> " + cor[0] + " Y--> " + cor[1] + "\n");
-                Console.WriteLine("Time For The Coins to Disappear: " + parts[2] + "\n");
-                Console.WriteLine("Value Of The Coins: " + parts[3] + "\n");
-                Console.WriteLine("*******************************************************************\n");
-            }
-            else if (index.Equals('L'))
-            {
-                Console.WriteLine("*******************************************************************\n");
-                Console.WriteLine("Guys...Life Pack Appeared.........\n");
-                String[] parts = msg.Split(':');
-                String[] cor = parts[1].Split(',');
-                Console.WriteLine("Life Pack Cordinates Are: " + "X--> " + cor[0] + " Y--> " + cor[1] + "\n");
-                Console.WriteLine("Time For The Life Pack to Disappear: " + parts[2] + "\n");
-                Console.WriteLine("*******************************************************************\n");
-            }
-            else if (index.Equals('G'))
-            {
-                Console.WriteLine("*******************************************************************\n");
-                Console.WriteLine("Global updates received.........\n");
-                String[] parts = msg.Split(':');
-                String[][] Updates = new String[parts.Length - 2][];
-                for (int i = 1; i < parts.Length - 1; i++)
+                // Loop to receive all the data sent by the client.
+                while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                 {
-                    parts[i] = parts[i].Replace(';', ',');
+                    // Translate data bytes to a ASCII string.
+                    data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);  //Encode Byte into a String
+                    //String[] spltted = data.Split(new Char[] { ':' });
 
+
+                    formatMsg(data);
+                    //  System.Console.WriteLine(data);
+                    // engine.ProcessData(spltted);
                 }
-                for (int i = 0; i < parts.Length - 2; i++)
-                {
-                    String[] cor = parts[i + 1].Split(',');
-                    Updates[i] = cor;
-                }
-                String dir = null;
-                for (int i = 0; i < Updates.Length; i++)
-                {
-                    Console.WriteLine("Player: " + Updates[i][0]);
-                    Console.WriteLine("X Coordinate--> " + Updates[i][1]);
-                    Console.WriteLine("Y Coordinate--> " + Updates[i][2]);
-                    if (Updates[i][3].Equals("0")) { dir = "North"; }
-                    else if (Updates[i][3].Equals("1")) { dir = "East"; }
-                    else if (Updates[i][3].Equals("2")) { dir = "South"; }
-                    else if (Updates[i][3].Equals("3")) { dir = "West"; }
-                    Console.WriteLine("Direction: " + dir);
-                    Console.WriteLine("Whether Shot: " + Updates[i][4]);
-                    Console.WriteLine("Health: " + Updates[i][5]);
-                    Console.WriteLine("Coins: " + Updates[i][6]);
-                    Console.WriteLine("Point: " + Updates[i][7] + "\n");
-                }
+                gameServer.Close();
+                stream.Close();
             }
+
         }
+
+        public static void formatMsg(String msg)
+        {
+            String[] firstpart = msg.Split('#');
+            String[] parts = firstpart[0].Split(':');
+
+            try
+            {
+                String msg_format = parts[0];
+                if (msg_format.Equals("I")) // game instant received
+                {
+                    Console.WriteLine("================================================================================\n");
+                    Console.WriteLine("New Game Instant received");
+                    String player = parts[1];
+                    Console.WriteLine("Player: " + player);
+
+                    // reading brick position details
+                    Console.WriteLine("Bricks -------------------------------------------");
+                    String brick_map = parts[2];
+                    String[] bricks = brick_map.Split(';');
+                    int brick_no = 1;
+                    foreach (String brick in bricks)
+                    {
+                        String[] brick_location = brick.Split(',');
+                        Console.WriteLine("Brick No. " + brick_no + " location ==>  X = " + brick_location[0] + " Y = " + brick_location[1]);
+                        brick_no++;
+                    }
+                    // end reading brick posiotion details
+
+
+                    // reading stone position details
+
+                    Console.WriteLine("Stones --------------------------------------------");
+                    String stone_map = parts[3];
+                    String[] stones = stone_map.Split(';');
+                    int stone_no = 1;
+                    foreach (String stone in stones)
+                    {
+                        String[] stone_location = stone.Split(',');
+                        Console.WriteLine("Stone No. " + stone_no + " location ==>  X = " + stone_location[0] + " Y = " + stone_location[1]);
+                        stone_no++;
+                    }
+
+                    // end of reading stone position details
+
+
+                    // reading water position details
+
+                    Console.WriteLine("Water --------------------------------------------");
+                    String water_map = parts[4];
+                    String[] waters = water_map.Split(';');
+                    int water_no = 1;
+                    foreach (String water in waters)
+                    {
+                        String[] water_location = water.Split(',');
+                        Console.WriteLine("Water No. " + water_no + " location ==>  X = " + water_location[0] + " Y = " + water_location[1]);
+                        water_no++;
+                    }
+
+                    // end of reading water position details
+
+                }
+                else if (msg_format.Equals("G")) // global update received
+                {
+                    Console.WriteLine("================================================================================\n");
+                    Console.WriteLine("New global Update received");
+                    int player_no = 1;
+                    for (player_no = 1; player_no <= 5; player_no++)
+                    {
+                        String player_code = parts[player_no];
+                        if (player_code.Substring(0, 1).Equals("P")) // this is a player sub string
+                        {
+                            String[] player_details = player_code.Split(';');
+                            Console.WriteLine("Player Details -----------------------------");
+                            Console.WriteLine("Player name: " + player_details[0]);
+                            String[] player_log = player_details[1].Split(',');
+                            Console.WriteLine("X ==> " + player_log[0] + " y ==> " + player_log[1]);
+                            Console.WriteLine("Direction ==> " + player_details[2]);
+                            Console.WriteLine("Whehter shot ==> " + player_details[3]);
+                            Console.WriteLine("Health ==> " + player_details[4]);
+                            Console.WriteLine("Coins ==> " + player_details[5]);
+                            Console.WriteLine("Point ==> " + player_details[6]);
+                        }
+                        else
+                            break;
+                    }
+                    Console.WriteLine("================================================================================\n");
+                    Console.WriteLine("Moving shot details");
+                    //  Console.WriteLine(parts[player_no]);
+                    String[] shots = parts[player_no].Split(';');
+                    foreach (String shot in shots)
+                    {
+                        String[] shot_details = shot.Split(',');
+                        Console.WriteLine("Shot details ####  x==> " + shot_details[0] + " y ==> " + shot_details[1] + " damage level ==> " + shot_details[2]);
+                    }
+
+
+
+
+                }
+                else if (msg_format.Equals("C")) // coin detail received
+                {
+                    Console.WriteLine("================================================================================\n");
+                    Console.WriteLine("Coin resource received");
+                    String[] location = parts[1].Split(',');
+                    Console.WriteLine("Location x ==> " + location[0] + " y ==> " + location[1]);
+                    Console.WriteLine("Time to disappear ==> " + parts[2]);
+                    Console.WriteLine("Value of coin ==> " + parts[3]);
+                }
+                else if (msg_format.Equals("L")) // coin detail received
+                {
+                    Console.WriteLine("================================================================================\n");
+                    Console.WriteLine("Life Pack received");
+                    String[] location = parts[1].Split(',');
+                    Console.WriteLine("Location x ==> " + location[0] + " y ==> " + location[1]);
+                    Console.WriteLine("Time to disappear ==> " + parts[2]);
+
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            /*foreach (String part in parts)
+            {
+                Console.WriteLine(part);
+            }*/
+        }
+
     }
 }
