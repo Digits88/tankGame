@@ -131,7 +131,7 @@ namespace TankGame
             #region text objects initializing
             // creating the title
             title_position = new Vector2(0, 0);
-            title_text = "                                                                iPlayTanks ";
+            title_text = "                                                                iPlaytanks ";
             title_color = Color.Black;
 
             // scoreboard title
