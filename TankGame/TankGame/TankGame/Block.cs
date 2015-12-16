@@ -22,7 +22,7 @@ namespace TankGame
 
 
         // variables for tanks
-        int direction;
+        int direction;//tankgame
         String id;
         int shooted;
         int health;
