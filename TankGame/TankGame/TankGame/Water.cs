@@ -8,12 +8,14 @@ using System.Text;
 
 namespace TankGame
 {
-    class Water :Block
+    class Water : Block
     {
-        public Water() :base()
+
+        public Water() : base()
         {
 
         }
+
         public Water(Vector2 position)
             : base(position)
         {

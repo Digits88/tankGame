@@ -36,7 +36,6 @@ namespace TankGame
         int block_pixel_size = 40;
         int grid_size = 20;
 
-        #endregion
 
         #region texture objects
         // declaring game texture objects
@@ -73,12 +72,11 @@ namespace TankGame
         Color player_4_color;
 
         #endregion
-
         // decalring empty block 
         Block[,] blocks;
 
         // server
-        TcpClient server;
+        TcpClient serv;
         TcpListener serverListner;
         Byte[] bytes;
         String data;
@@ -87,16 +85,20 @@ namespace TankGame
 
         //instants for updating purposes
         private int state = 0;
-        //Timer _timer;
+        System.Timers.Timer _timer;
 
         // details about our tank
         string player_id;
 
+
         // AI related instants
-        //AI ai;
-        //Timer _timer_ai;
-        //int tmpstd = 0;
+        AI ai;
+        System.Timers.Timer _timer_ai;
+        int tmpstd = 0;
         public EventHandler<ServerMessageArgs> newMessage;
+
+
+        #endregion
 
         public Game1()
         {
@@ -131,7 +133,7 @@ namespace TankGame
             #region text objects initializing
             // creating the title
             title_position = new Vector2(0, 0);
-            title_text = "                                                                iPlaytanks ";
+            title_text = "                                                                Black Panther ";
             title_color = Color.Black;
 
             // scoreboard title
@@ -177,15 +179,21 @@ namespace TankGame
             }
 
             #endregion
+
             #region event handling
-            //Timer _timer = new Timer(500);
-            //_timer.Elapsed += new ElapsedEventHandler(run_game);
-            //_timer.Enabled = true;
+            ai = new AI(blocks, grid_size, player_id);
+            ai.listenToMessages(this);
+
+
+
+            _timer = new System.Timers.Timer(500);
+            _timer.Elapsed += new ElapsedEventHandler(run_game);
+            _timer.Enabled = true;
 
             #endregion
             base.Initialize();
-
         }
+
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
         /// all of your content.
@@ -319,10 +327,10 @@ namespace TankGame
 
             try
             {
-                server = new TcpClient();
-                server.Connect(server_ip, 6000);
+                serv = new TcpClient();
+                serv.Connect(server_ip, 6000);
                 String str = "JOIN#";
-                NetworkStream stm = server.GetStream();
+                NetworkStream stm = serv.GetStream();
 
                 ASCIIEncoding asen = new ASCIIEncoding();
                 byte[] ba = asen.GetBytes(str);
@@ -515,7 +523,7 @@ namespace TankGame
             int[] location = new int[] { int.Parse(location_str[0]), int.Parse(location_str[1]) };
             int direction = int.Parse(details[2]);
             //  this.player_id = player_id;
-            //ai.set_player_id(this.player_id);
+            ai.set_player_id(this.player_id);
             bool our = false;
             if (String.Compare(player_id, this.player_id) == 0) // if this is our tank
             {
@@ -523,7 +531,7 @@ namespace TankGame
             }
             blocks[int.Parse(location_str[0]), int.Parse(location_str[1])].change_type(player_id, Content, direction, -100, -100, -100, -100, our);
 
-            //ai.start_ai();
+            ai.start_ai();
 
             //  Tank new_tank = new Tank(0, direction, player_id, 0, 0, 0, 0);
             //  boad.edit_grid(new_tank, location);

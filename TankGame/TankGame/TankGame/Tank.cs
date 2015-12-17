@@ -8,7 +8,7 @@ using System.Text;
 
 namespace TankGame
 {
-    class Tank :Block
+    class Tank : Block
     {
         public Tank()
             : base()

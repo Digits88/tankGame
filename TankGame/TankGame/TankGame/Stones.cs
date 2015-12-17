@@ -8,15 +8,15 @@ using System.Text;
 
 namespace TankGame
 {
-    class Stones :Block
+    class Stone : Block
     {
-        public Stones()
+        public Stone()
             : base()
         {
 
         }
 
-        public Stones(Vector2 position)
+        public Stone(Vector2 position)
             : base(position)
         {
         }
